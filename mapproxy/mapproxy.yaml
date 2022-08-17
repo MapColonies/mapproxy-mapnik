@@ -1,0 +1,44 @@
+grids:
+  webmercator:
+    base: GLOBAL_WEBMERCATOR
+  epsg4326grid:
+    srs: EPSG:4326
+    bbox:
+    - -180
+    - -90
+    - 180
+    - 90
+    name: libotGrid
+    origin: ll
+    min_res: 0.703125
+    num_levels: 21
+caches:
+  avi_cache:
+    cache:
+      type: s3
+      bucket_name: vector
+      endpoint_url: http://10.8.1.13:9000 # for example:
+      directory: tiles-default
+    grids:
+    - epsg4326grid
+    sources: []
+
+layers:
+- name: avi
+  title: AVI AVI
+  sources:
+  - osm
+
+
+sources:
+  osm_wms:
+    req:
+      url: https://maps.omniscale.net/v2/demo/style.default/service?
+      layers: osm
+    type: wms
+  osm:
+    type: mapnik
+    mapfile: /tmp/carto/mapnik.xml
+services:
+  demo:
+  wms:
