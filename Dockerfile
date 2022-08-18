@@ -88,5 +88,16 @@ RUN pip3 install -r requirements.txt
 COPY mapproxy/uwsgi.ini /settings/uwsgi.default.ini
 COPY mapproxy/. .
 RUN chmod a+x start.sh
-RUN rm -r /mapnik /boost /proj
 RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat +datum=WGS84 +no_defs +type=crs'/g" /usr/local/lib/python3.8/dist-packages/mapproxy/source/mapnik.py
+RUN apt install -y curl zip
+COPY carto/mapnik.xml /carto/mapnik.xml
+RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git /tmp/openstreetmap-carto  \ 
+    && cd /tmp/openstreetmap-carto \
+    && git checkout tags/v5.6.1 -b flex/master \
+    && cp -r symbols patterns /carto/ \
+    && cp scripts/get-fonts.sh /carto/ \
+    && cd /carto \
+    && chmod +x get-fonts.sh \
+    && ./get-fonts.sh \
+    && rm -r /tmp/openstreetmap-carto
+    

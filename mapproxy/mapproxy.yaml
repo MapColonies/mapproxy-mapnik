@@ -24,21 +24,16 @@ caches:
     sources: []
 
 layers:
-- name: avi
-  title: AVI AVI
+- name: openstreetmap-carto
+  title: The original osm style
   sources:
-  - osm
+  - osm-mapnik
 
 
 sources:
-  osm_wms:
-    req:
-      url: https://maps.omniscale.net/v2/demo/style.default/service?
-      layers: osm
-    type: wms
-  osm:
+  osm-mapnik:
     type: mapnik
-    mapfile: /tmp/carto/mapnik.xml
+    mapfile: /carto/mapnik.xml
 services:
   demo:
   wms:
