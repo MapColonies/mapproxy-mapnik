@@ -4,12 +4,12 @@ FROM ubuntu:20.04
 
 RUN apt-get update && apt install -y software-properties-common && \
   add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
-  && apt-get install -y build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev wget 
+  && apt-get install -y build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev wget 
 
 WORKDIR /boost
-RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz
-RUN tar -zxvf boost_1_73_0.tar.gz
-WORKDIR /boost/boost_1_73_0
+RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
+RUN tar -zxvf boost_1_79_0.tar.gz
+WORKDIR /boost/boost_1_79_0
 RUN ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3 --with-libraries=system,filesystem,thread,regex,program_options,python
 RUN ./b2
 RUN ./b2 install 
