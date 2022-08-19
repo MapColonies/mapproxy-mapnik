@@ -1,6 +1,4 @@
-ARG MAPPROXY_BASE_IMAGE
-
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as boost_build
 
 RUN apt-get update && apt install -y software-properties-common && \
   add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
@@ -10,9 +8,25 @@ WORKDIR /boost
 RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
 RUN tar -zxvf boost_1_79_0.tar.gz
 WORKDIR /boost/boost_1_79_0
-RUN ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3 --with-libraries=system,filesystem,thread,regex,program_options,python
+RUN ./bootstrap.sh --prefix=/tmp/boost/ --with-python=/usr/bin/python3 --with-libraries=system,filesystem,thread,regex,program_options,python
 RUN ./b2
-RUN ./b2 install 
+RUN ./b2 install
+
+FROM ubuntu:20.04
+
+COPY --from=boost_build /tmp/boost/ /usr/local/
+
+RUN apt-get update && apt install -y software-properties-common && \
+  add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
+  && apt-get install -y build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev wget 
+
+# WORKDIR /boost
+# RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
+# RUN tar -zxvf boost_1_79_0.tar.gz
+# WORKDIR /boost/boost_1_79_0
+# RUN ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3 --with-libraries=system,filesystem,thread,regex,program_options,python
+# RUN ./b2
+# RUN ./b2 install 
 
 # workdir /cmake
 
