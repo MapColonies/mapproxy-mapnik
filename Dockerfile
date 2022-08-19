@@ -12,6 +12,15 @@ RUN ./bootstrap.sh --prefix=/tmp/boost/ --with-python=/usr/bin/python3 --with-li
 RUN ./b2
 RUN ./b2 install
 
+FROM ubuntu:20.04 as style
+
+RUN apt update && apt install -y curl zip git
+RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git /tmp/openstreetmap-carto  \ 
+    && cd /tmp/openstreetmap-carto \
+    && git checkout tags/v5.6.1 -b flex/master \
+    # && chmod +x get-fonts.sh \
+    && ./scripts/get-fonts.sh
+
 FROM ubuntu:20.04
 
 COPY --from=boost_build /tmp/boost/ /usr/local/
@@ -102,16 +111,9 @@ RUN pip3 install -r requirements.txt
 COPY mapproxy/uwsgi.ini /settings/uwsgi.default.ini
 COPY mapproxy/. .
 RUN chmod a+x start.sh
-RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat +datum=WGS84 +no_defs +type=crs'/g" /usr/local/lib/python3.8/dist-packages/mapproxy/source/mapnik.py
-RUN apt install -y curl zip
-COPY carto/mapnik.xml /carto/mapnik.xml
-RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git /tmp/openstreetmap-carto  \ 
-    && cd /tmp/openstreetmap-carto \
-    && git checkout tags/v5.6.1 -b flex/master \
-    && cp -r symbols patterns /carto/ \
-    && cp scripts/get-fonts.sh /carto/ \
-    && cd /carto \
-    && chmod +x get-fonts.sh \
-    && ./get-fonts.sh \
-    && rm -r /tmp/openstreetmap-carto
-    
+RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat +datum=WGS84 +no_defs +type=crs'/g" /usr/local/lib/python3.8/dist-packages/mapproxy/source/mapnik.py    
+
+COPY --from=style /tmp/openstreetmap-carto/symbols /carto/symbols
+COPY --from=style /tmp/openstreetmap-carto/fonts /carto/fonts
+COPY --from=style /tmp/openstreetmap-carto/patterns /carto/patterns
+COPY carto/mapnik.xml /carto/
