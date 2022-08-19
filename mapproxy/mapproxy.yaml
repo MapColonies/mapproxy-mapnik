@@ -12,16 +12,6 @@ grids:
     origin: ll
     min_res: 0.703125
     num_levels: 21
-caches:
-  avi_cache:
-    cache:
-      type: s3
-      bucket_name: vector
-      endpoint_url: http://10.8.1.13:9000 # for example:
-      directory: tiles-default
-    grids:
-    - epsg4326grid
-    sources: []
 
 layers:
 - name: openstreetmap-carto
@@ -34,6 +24,11 @@ sources:
   osm-mapnik:
     type: mapnik
     mapfile: /carto/mapnik.xml
+    transparent: true
 services:
   demo:
   wms:
+    srs: ['EPSG:4326']
+    image_formats: ['image/png']
+    on_source_errors: raise
+
