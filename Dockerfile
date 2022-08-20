@@ -1,8 +1,9 @@
 FROM ubuntu:20.04 as boost_build
 
-RUN apt-get update && apt install -y software-properties-common && \
-  add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
-  && apt-get install -y build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev wget 
+# RUN apt-get update && apt install -y software-properties-common && \
+  # add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y software-properties-common \
+    build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev wget 
 
 WORKDIR /boost
 RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
@@ -22,6 +23,18 @@ RUN cd proj-9.0.1 && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX:PAT
   -DBUILD_APPS=OFF -DBUILD_TESTING=OFF -DENABLE_CURL=OFF -DENABLE_TIFF=OFF .. \
   && cmake --build . \
   && cmake --build . --target install
+
+
+FROM ubuntu:20.04 as python_deps
+
+RUN apt update && apt install -y software-properties-common && \
+  add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip python3.8-venv
+
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY mapproxy/requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
 
 FROM ubuntu:20.04 as style
 
@@ -97,13 +110,15 @@ ENV \
     OTEL_SERVICE_NAME='mapproxy' \
     TELEMETRY_SAMPLING_RATIO_DENOMINATOR=1000
 
-COPY mapproxy/requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+# COPY mapproxy/requirements.txt requirements.txt
+# RUN pip3 install -r requirements.txt
+COPY --from=python_deps /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 COPY mapproxy/uwsgi.ini /settings/uwsgi.default.ini
 COPY mapproxy/. .
 RUN chmod a+x start.sh
-RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat +datum=WGS84 +no_defs +type=crs'/g" /usr/local/lib/python3.8/dist-packages/mapproxy/source/mapnik.py    
+RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat +datum=WGS84 +no_defs +type=crs'/g" /opt/venv/lib/python3.8/site-packages/mapproxy/source/mapnik.py    
 
 COPY --from=style /tmp/openstreetmap-carto/symbols /carto/symbols
 COPY --from=style /tmp/openstreetmap-carto/fonts /carto/fonts
