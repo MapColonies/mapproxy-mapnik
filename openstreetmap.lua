@@ -615,6 +615,30 @@ function split_tags(tags, tag_map)
     return cols
 end
 
+-- NOT IN ORIGINAL SCRIPT
+--- Splits a tag into tags and hstore tags
+-- @param tags OSM tags
+-- @return string The name
+function get_name(tags)
+    if tags['name:he'] then
+        return tags['name:he']
+    end
+
+    if not tags['name'] then
+        return
+    end
+
+    for p, c in utf8.codes(tags['name']) do 
+        if c >= 1425 and c <= 1514 then
+            return tags['name']
+        end
+    end
+    
+    if tags['name:en'] then
+        return tags['name:en']
+    end
+end
+
 phase2_admin_ways_level = {}
 phase2_admin_ways_parents = {}
 
@@ -690,6 +714,8 @@ function osm2pgsql.process_node(object)
         return
     end
 
+    object.tags.name = get_name(object.tags)
+
     add_point(object)
 end
 
@@ -705,6 +731,8 @@ function osm2pgsql.process_way(object)
     if clean_tags(object.tags) then
         return
     end
+
+    object.tags.name = get_name(object.tags)
 
     local area_tags = isarea(object.tags)
     if object.is_closed and area_tags then
@@ -734,6 +762,9 @@ function osm2pgsql.process_relation(object)
     if clean_tags(object.tags) then
         return
     end
+
+    object.tags.name = get_name(object.tags)
+
     if type == "boundary" then
         add_line(object)
 

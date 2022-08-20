@@ -1,7 +1,6 @@
 #!/bin/bash
 # Check if uwsgi configuration exists
 if [[ ! -f /settings/uwsgi.ini ]]; then
-  echo "/settings/uwsgi.ini doesn't exists"
   # If it doesn't exists, copy from /mapproxy directory if exists
   if [[ -f /mapproxy/uwsgi.ini ]]; then
     cp -f /mapproxy/uwsgi.ini /settings/uwsgi.ini
