@@ -12,6 +12,17 @@ RUN ./bootstrap.sh --prefix=/tmp/boost/ --with-python=/usr/bin/python3 --with-li
 RUN ./b2
 RUN ./b2 install
 
+FROM ubuntu:20.04 as proj_build
+
+WORKDIR /proj
+RUN apt update && apt install -y sqlite3 libsqlite3-dev cmake g++ wget
+RUN wget https://download.osgeo.org/proj/proj-9.0.1.tar.gz
+RUN tar -zxvf proj-9.0.1.tar.gz
+RUN cd proj-9.0.1 && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX:PATH=/tmp/proj -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_APPS=OFF -DBUILD_TESTING=OFF -DENABLE_CURL=OFF -DENABLE_TIFF=OFF .. \
+  && cmake --build . \
+  && cmake --build . --target install
+
 FROM ubuntu:20.04 as style
 
 RUN apt update && apt install -y curl zip git
@@ -24,33 +35,14 @@ RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git /tmp/opens
 FROM ubuntu:20.04
 
 COPY --from=boost_build /tmp/boost/ /usr/local/
+COPY --from=proj_build /tmp/proj/ /usr/local/
 
 RUN apt-get update && apt install -y software-properties-common && \
   add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.8 python3-pip \
   && apt-get install -y build-essential g++ python3-dev autotools-dev libicu-dev libbz2-dev wget 
 
-# WORKDIR /boost
-# RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
-# RUN tar -zxvf boost_1_79_0.tar.gz
-# WORKDIR /boost/boost_1_79_0
-# RUN ./bootstrap.sh --prefix=/usr/local --with-python=/usr/bin/python3 --with-libraries=system,filesystem,thread,regex,program_options,python
-# RUN ./b2
-# RUN ./b2 install 
+RUN apt-get install -y sqlite3 libsqlite3-dev cmake
 
-# workdir /cmake
-
-# RUN wget https://github.com/Kitware/CMake/releases/download/v3.21.0/cmake-3.21.0.tar.gz
-# RUN tar xvf cmake-3.21.0.tar.gz
-# RUN cd cmake-3.21.0 && ./bootstrap -- -DCMAKE_USE_OPENSSL=OFF && make && make install
-
-RUN apt-get install -y sqlite3 libsqlite3-dev cmake libtiff-dev libcurl4-openssl-dev
-
-WORKDIR /proj
-RUN wget https://download.osgeo.org/proj/proj-9.0.1.tar.gz
-RUN tar -zxvf proj-9.0.1.tar.gz
-RUN cd proj-9.0.1 && mkdir build && cd build && cmake -DBUILD_APPS=OFF -DBUILD_TESTING=OFF .. \
-  && cmake --build . \
-  && cmake --build . --target install
 # && projsync --system-directory
 
 WORKDIR /mapnik
