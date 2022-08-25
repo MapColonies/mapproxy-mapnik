@@ -1,0 +1,129 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "mapproxy-mapnik.name" . -}}
+{{- $cloudProviderFlavor := include "mapproxy-mapnik.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "mapproxy-mapnik.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "mapproxy-mapnik.cloudProviderImagePullSecretName" . -}}
+{{- $imageTag := include "mapproxy-mapnik.tag" . -}}
+{{- if .Values.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $releaseName }}-{{ $chartName }}
+  labels:
+    app: {{ $chartName }}
+    component: {{ $chartName }}
+    environment: {{ include "mapproxy-mapnik.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "mapproxy-mapnik.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $chartName }}
+      release: {{ $releaseName }}
+      run: {{ $releaseName }}-{{ $chartName }}
+      {{- include "mapproxy-mapnik.selectorLabels" . | nindent 6 }}
+{{- with .Values.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  template:
+    metadata:
+      labels:
+        app: {{ $chartName }}
+        release: {{ $releaseName }}
+        run: {{ $releaseName }}-{{ $chartName }}
+        {{- include "mapproxy-mapnik.selectorLabels" . | nindent 8 }}
+      annotations:
+{{- with .Values.podAnnotations }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+      {{- if .Values.resetOnConfigChange }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
+    spec:
+    {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+    {{- end }}
+      containers:
+        - name: {{ $releaseName }}-{{ $chartName }}-mapproxy
+          {{- with .Values.image }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
+          imagePullPolicy: {{ .pullPolicy }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /mnt/socket
+              name: socket-volume
+            {{- if .Values.dbConfig.sslAuth.enabled }}
+            - name: cert-conf
+              mountPath: /tmp/certs
+              readOnly: true
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $releaseName }}-{{ $chartName }}-configmap
+            - secretRef:
+                name: {{ $releaseName }}-{{ $chartName }}-secret
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+            exec:
+              command:
+              - uwsgi_curl
+              - -H
+              - "Host: probe.local"
+              - {{ .Values.env.uwsgiSocketPath }}
+              - /
+          {{- if .Values.resources.enabled }}
+          resources:
+            {{- toYaml .Values.resources.value | nindent 12 }}
+          {{- end }}
+        - name: {{ $releaseName }}-{{ $chartName }}-nginx
+          {{- with .Values.nginx.image }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
+          imagePullPolicy: {{ .pullPolicy }}
+          {{- end }}
+          env:
+          - name: OTEL_SERVICE_NAME
+            value: mapproxy-mapnik-nginx-proxy
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: {{ .Values.env.tracing.url }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /mnt/socket
+              name: socket-volume
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+              readOnly: true  
+          readinessProbe:
+            httpGet:
+              path: /nginx_status
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /nginx_status
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          {{- if .Values.nginx.resources.enabled }}
+          resources:
+            {{- toYaml .Values.nginx.resources.value | nindent 12 }}
+          {{- end }}
+      volumes:
+        {{- if .Values.dbConfig.sslAuth.enabled }}
+        - name: cert-conf
+          secret:
+            secretName: {{ .Values.dbConfig.sslAuth.secretName }}
+        {{- end }}
+        - name: socket-volume
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: {{ $releaseName }}-{{ $chartName }}-nginx-configmap
+
+{{- end -}}

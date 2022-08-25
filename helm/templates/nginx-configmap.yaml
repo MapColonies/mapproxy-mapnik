@@ -1,0 +1,32 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "mapproxy-mapnik.name" . -}}
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $releaseName }}-{{ $chartName }}-nginx-configmap
+data:
+  default.conf: |-
+    server {
+        server_name localhost;
+        listen 8080;
+
+        location /nginx_status {
+          opentelemetry off;
+          access_log off;
+          stub_status;
+        }
+        
+        location / {
+            opentelemetry_operation_name mapproxy_mapnik_uwsgi_pass;
+            opentelemetry_propagate;
+            opentelemetry_attribute "deployment.environment" "{{ .Values.environment }}";
+            include /etc/nginx/uwsgi_params;
+            uwsgi_pass unix://{{ .Values.env.uwsgiSocketPath }};
+            uwsgi_param Host $host;
+            uwsgi_param X-Real-IP $remote_addr;
+            uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+            uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+        }
+    }
+{{- end }}

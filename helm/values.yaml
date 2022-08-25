@@ -1,0 +1,90 @@
+global:
+  cloudProvider: {}
+  tracing: {}
+  metrics: {}
+  environment: {}
+
+enabled: true
+environment: development
+replicaCount: 1
+initialDelaySeconds: 60
+nodePort: 30030 #for minikube deployment only
+resetOnConfigChange: true
+
+annotations: {}
+podAnnotations: {}
+
+cloudProvider:
+  dockerRegistryUrl: my-registry-url.io
+  imagePullSecretName: 'my-registry-secret'
+  flavor: openshift
+
+caSecretName: ''
+caPath: '/usr/local/share/ca-certificates'
+caKey: 'ca.crt'
+
+image:
+  repository: mapproxy-mapnik
+  pullPolicy: Always
+  tag: '0.0.1'
+
+env:
+  uwsgiSocketPath: /mnt/socket/mapproxy.sock
+  logLevel: info
+  tracing:
+    enabled: false
+    url: http://localhost:55681/v1/trace
+    ratio_denominator: 1
+
+dbConfig:
+  host: localhost
+  username: postgres
+  password: postgres
+  database: mapproxy-mapnik
+  port: 5432
+  sslAuth:
+    enabled: false
+    secretName: secret-name
+    certFileName: postgresql.crt
+    keyFileName: postgresql.key
+    caFileName: root.crt
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 2000m
+      memory: 2048Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+route:
+  enabled: false
+  path: /
+  timeout:
+    enabled: false # defaults to 30s by openshift
+    duration: 60s # supported units (us, ms, s, m, h, d)
+
+ingress:
+  enabled: false
+  path: /
+  host: 'localhost'
+  cors:
+    enabled: true
+    origin: '*'
+
+nginx:
+  image:
+    repository: nginx-os
+    pullPolicy: Always
+    tag: '1.21.4'
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
