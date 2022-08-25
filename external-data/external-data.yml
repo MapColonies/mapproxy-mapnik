@@ -83,8 +83,8 @@ sources:
       - "WINDOWS-1252"
       - "-explodecollections"
       # needs reprojecting
-      - '-t_srs'
-      - 'EPSG:4326'
+      # - '-t_srs'
+      # - 'EPSG:4326'
     archive:
       format: zip
       files:
@@ -92,3 +92,60 @@ sources:
         - ne_110m_admin_0_boundary_lines_land.prj
         - ne_110m_admin_0_boundary_lines_land.shp
         - ne_110m_admin_0_boundary_lines_land.shx
+
+  ne_10m_admin_0_countries_isr:
+    type: shp
+    # url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_isr.zip
+    url: file:///data/ne_10m_admin_0_countries_isr.zip
+    file: ne_10m_admin_0_countries_isr.shp
+    ogropts:
+      - "-explodecollections"
+      # needs reprojecting
+      # - '-t_srs'
+      # - 'EPSG:4326'
+    archive:
+      format: zip
+      files:
+        - ne_10m_admin_0_countries_isr.dbf
+        - ne_10m_admin_0_countries_isr.prj
+        - ne_10m_admin_0_countries_isr.shp
+        - ne_10m_admin_0_countries_isr.shx
+
+  ne_10m_admin_0_boundary_lines_land:
+    type: shp
+    # url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_boundary_lines_land.zip
+    url: file:///data/ne_10m_admin_0_boundary_lines_land.zip
+    file: ne_10m_admin_0_boundary_lines_land.shp
+    ogropts:
+      - "--config"
+      - "SHAPE_ENCODING"
+      - "WINDOWS-1252"
+      - "-explodecollections"
+      # needs reprojecting
+      # - '-t_srs'
+      # - 'EPSG:4326'
+    archive:
+      format: zip
+      files:
+        - ne_10m_admin_0_boundary_lines_land.dbf
+        - ne_10m_admin_0_boundary_lines_land.prj
+        - ne_10m_admin_0_boundary_lines_land.shp
+        - ne_10m_admin_0_boundary_lines_land.shx
+
+  ne_10m_populated_places:
+    type: shp
+    # url: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip
+    url: file:///data/ne_10m_populated_places.zip
+    file: ne_10m_populated_places.shp
+    ogropts:
+      - "-explodecollections"
+      # needs reprojecting
+      # - '-t_srs'
+      # - 'EPSG:4326'
+    archive:
+      format: zip
+      files:
+        - ne_10m_populated_places.dbf
+        - ne_10m_populated_places.prj
+        - ne_10m_populated_places.shp
+        - ne_10m_populated_places.shx
