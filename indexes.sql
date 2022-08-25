@@ -1,6 +1,3 @@
--- These are indexes for rendering performance with OpenStreetMap Carto.
--- This file is generated with scripts/indexes.py
-
 CREATE INDEX planet_osm_line_ferry
   ON planet_osm_line USING GIST (way)
   WHERE route = 'ferry' AND osm_id > 0;
