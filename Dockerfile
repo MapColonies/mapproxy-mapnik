@@ -108,6 +108,7 @@ ENV \
     # Run
     PROCESSES=6 \
     THREADS=10 \
+    UWSGI_SOCKET_PATH=/mnt/socket/mapproxy.sock \
     # Run using uwsgi. This is the default behaviour. Alternatively run using the dev server. Not for production settings
     PRODUCTION=true \
     TELEMETRY_TRACING_ENABLED='false' \
@@ -141,7 +142,9 @@ COPY --from=python_deps /opt/venv /opt/venv
 COPY mapproxy/uwsgi.default.ini /settings/uwsgi.default.ini
 COPY mapproxy/. .
 RUN chmod a+x start.sh && chgrp -R 0 /mapproxy /settings && \
-    chmod -R g=u /mapproxy /settings
+    chmod -R g=u /mapproxy /settings && \
+    # setup for postgresql certs directory
+    mkdir /.postgresql && chmod g+w /.postgresql 
 
 # style setup
 COPY --from=style /carto /carto
