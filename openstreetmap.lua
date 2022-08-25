@@ -624,19 +624,19 @@ function get_name(tags)
         return tags['name:he']
     end
 
-    if not tags['name'] then
-        return
-    end
-
-    for p, c in utf8.codes(tags['name']) do 
+    if tags['name'] then
+      for p, c in utf8.codes(tags['name']) do 
         if c >= 1425 and c <= 1514 then
             return tags['name']
         end
+      end
     end
     
     if tags['name:en'] then
         return tags['name:en']
     end
+
+    return tags['name']
 end
 
 phase2_admin_ways_level = {}
