@@ -17,7 +17,7 @@ data:
   PGDATABASE: {{ .database }}
   {{- end -}}
   {{- if .Values.dbConfig.sslAuth.enabled }}
-  DB_ENABLE_SSL_AUTH: "true"
+  POSTGRES_ENABLE_SSL_AUTH: "true"
   DB_CERT_SECRET_NAME: {{ .Values.dbConfig.sslAuth.secretName }}
   DB_CERT_PATH: /tmp/certs/{{ .Values.dbConfig.sslAuth.certFileName }}
   DB_KEY_PATH: /tmp/certs/{{ .Values.dbConfig.sslAuth.keyFileName }}

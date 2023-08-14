@@ -92,13 +92,16 @@ RUN sed -i -e "s/'+init=%s' % str(query\.srs\.srs_code\.lower())/'+proj=longlat 
 # fetching all the static resources required for the style
 FROM ubuntu:20.04 as style
 
-RUN apt update && apt install -y curl zip git
-RUN git clone https://github.com/gravitystorm/openstreetmap-carto.git /tmp/openstreetmap-carto  \ 
+RUN apt update && apt install -y curl zip git && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt install -y nodejs
+RUN git clone https://github.com/MapColonies/openstreetmap-carto /tmp/openstreetmap-carto  \ 
     && cd /tmp/openstreetmap-carto \
-    && git checkout tags/v5.6.1 -b flex/master \
+    && git checkout flex/master \
     && ./scripts/get-fonts.sh \
+    && npm install -g carto \
+    && carto project.mml > mapnik.xml \
     && mkdir /carto \
-    && cp -r patterns symbols fonts /carto 
+    && cp -r patterns symbols fonts mapnik.xml /carto 
 
 
 FROM ubuntu:20.04
@@ -148,7 +151,6 @@ RUN chmod a+x start.sh && chgrp -R 0 /mapproxy /settings && \
 
 # style setup
 COPY --from=style /carto /carto
-COPY carto/mapnik.xml /carto/
 
 # creating user to simulate openshift
 RUN useradd -ms /bin/bash user && usermod -a -G root user
