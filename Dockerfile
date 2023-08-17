@@ -62,7 +62,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /python-mapnik
-RUN git clone https://github.com/koordinates/python-mapnik .
+RUN git clone https://github.com/koordinates/python-mapnik . && git checkout master
 RUN python3 setup.py develop && python3 setup.py install
 
 RUN cd /mapnik && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=/opt/mapnik -DPostgreSQL_TYPE_INCLUDE_DIR=/usr/include/postgresql/ -DBUILD_TESTING=OFF -DUSE_JPEG=OFF \
